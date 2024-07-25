@@ -1,0 +1,4 @@
+module;
+
+import supply_chain_mgmt.operations;
+import supply_chain_mgmt.queries;

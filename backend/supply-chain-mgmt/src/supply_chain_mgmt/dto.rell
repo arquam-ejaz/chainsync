@@ -1,0 +1,38 @@
+module;
+
+import ^.model.*;
+
+struct temp_user_dto {
+    role: struct<role>;
+    site: struct<site>;
+    wallet_address: text;
+    name: text;
+    active: boolean;
+    timestamp: integer;
+}
+
+struct user_dto {
+    account: struct<account>;
+    role: struct<role>;
+    site: struct<site>;
+    name: text;
+    active: boolean;
+    timestamp: integer;
+}
+
+struct inventory_dto {
+    site: struct<site>;
+    product: struct<product>;
+    quantity: integer;
+}
+
+struct request_dto {
+    id: text;
+    product: struct<product>;
+    requested_by: struct<site>;
+    requested_from: struct<site>;
+    quantity: integer;
+    pending: boolean;
+    approved: boolean;
+    msg: text;
+}

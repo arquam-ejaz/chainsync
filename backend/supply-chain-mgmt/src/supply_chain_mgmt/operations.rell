@@ -1,0 +1,208 @@
+module;
+
+import supply_chain_mgmt.*;
+import ^.model.*;
+import ^.constants;
+import lib.ft4.core.accounts.{ account, single_sig_auth_descriptor, create_account_with_auth};
+import lib.ft4.auth;
+import lib.ft4.accounts.strategies.open;
+import lib.ft4.accounts.strategies.{ register_account };
+
+@extend(auth.auth_handler)
+function () = auth.add_auth_handler(
+    flags = ["MySession"]
+);
+
+operation init() {
+    create role ( constants.ROLE_ADMIN );
+    create role ( constants.ROLE_MANAGER );
+    create site (
+        id = constants.INIT_SITE_ID,
+        type = constants.INIT,
+        name = constants.INIT,
+        address_desc = constants.INIT
+    );
+}
+
+operation add_site(caller_account_id: byte_array, id: text, name: text, address_desc: text, is_warehouse: boolean) {
+    auth.authenticate();
+    is_admin(caller_account_id);
+    create site (
+        id,
+        type = if (is_warehouse) constants.SITE_WAREHOUSE else constants.SITE_SHOWROOM,
+        name,
+        address_desc
+    );
+}
+
+operation update_site(caller_account_id: byte_array, id: text, name: text, address_desc: text) {
+    auth.authenticate();
+    is_admin(caller_account_id);
+    update site @ { .id == id } ( name, address_desc );
+}
+
+operation update_username(caller_account_id: byte_array, name: text) {
+    auth.authenticate();
+    update user @ { .account.id == caller_account_id } ( name );
+}
+
+operation register_user(
+    name: text,
+    wallet_address: text,
+) {
+    val account = register_account();
+    val temp_user = temp_user @? { .wallet_address == wallet_address.upper_case() };
+
+    if (empty(temp_user)) {
+        val role = role @ { .title == constants.ROLE_ADMIN };
+        val site = site @ { .id == constants.INIT_SITE_ID };
+        create user ( account, role, site, name, true );
+    } else {
+        val role = temp_user.role;
+        val site = temp_user.site;
+        create user ( account, role, site, name = temp_user.name, true );
+        delete temp_user;
+    }
+}
+
+// operation register_as_manager(
+//     name: text,
+//     site: site
+// ) {
+//     val account = register_account();
+//     val role = role @ { .title == constants.ROLE_MANAGER };
+//     create user ( account, role, site, name, true );
+// }
+
+// operation register_as_admin(
+//     name: text
+// ) {
+//     val account = register_account();
+//     val role = role @ { .title == constants.ROLE_ADMIN };
+//     val site = site @ { .id == constants.INIT_SITE_ID };
+//     create user ( account, role, site, name, true );
+// }
+
+operation add_user(
+    caller_account_id: byte_array,
+    pubkey: text,
+    role_title: text,
+    site_id: text,
+    name: text,
+    active: boolean
+) {
+    auth.authenticate();
+    is_admin(caller_account_id);
+    val role = role @ { .title == role_title };
+    val site = if (role_title == constants
+        .ROLE_ADMIN) site @ {
+        .id == constants.INIT_SITE_ID
+    } else site @ {
+        .id == site_id
+    };
+    create temp_user ( role, site, name, active, wallet_address = pubkey.upper_case() );
+}
+
+operation update_user(
+    caller_account_id: byte_array,
+    user_account_id: byte_array,
+    role_title: text,
+    site_id: text,
+    name: text,
+    active: boolean
+) {
+    auth.authenticate();
+    is_admin(caller_account_id);
+    val role = role @ { .title == role_title };
+    val site = if (role_title == constants
+        .ROLE_ADMIN) site @ {
+        .id == constants.INIT_SITE_ID
+    } else site @ {
+        .id == site_id
+    };
+    update user @ { .account.id == user_account_id } ( role, site, name, active );
+}
+
+operation add_product(caller_account_id: byte_array, id: text, name: text, desc: text, type: text) {
+    auth.authenticate();
+    is_admin(caller_account_id);
+    create product ( id, name, desc, type );
+}
+
+operation update_product(caller_account_id: byte_array, id: text, name: text, desc: text, type: text) {
+    auth.authenticate();
+    is_admin(caller_account_id);
+    update product @ { .id == id } ( name, desc, type );
+}
+
+operation add_inventory(caller_account_id: byte_array, site_id: text, product_id: text, quantity: integer) {
+    auth.authenticate();
+    is_admin(caller_account_id);
+    val site = site @ { .id == site_id };
+    val product = product @ { .id == product_id };
+    val inventory = inventory @? { .site.id == site.id, .product.id == product_id };
+    if (empty(inventory)) {
+        create inventory ( site, product, quantity );
+    } else {
+        val updated_quantity = inventory.quantity + quantity;
+        update inventory ( quantity = updated_quantity );
+    }
+    ;
+}
+
+operation update_inventory(caller_account_id: byte_array, site_id: text, product_id: text, quantity: integer) {
+    auth.authenticate();
+    is_admin(caller_account_id);
+    update inventory @ { .site.id == site_id, .product.id == product_id } ( quantity );
+}
+
+operation create_request(
+    caller_account_id: byte_array,
+    id: text,
+    product_id: text,
+    req_by_site_id: text,
+    req_from_site_id: text,
+    quantity: integer
+) {
+    auth.authenticate();
+    is_showroom_manager(caller_account_id);
+    val avl_quantity = get_product_quantity_by_site(product_id, req_from_site_id);
+    require(avl_quantity >= quantity, "Requested product quantity cannot be more than available quantity");
+    val product = product @ { .id == product_id };
+    val requested_by = site @ { .id == req_by_site_id };
+    val requested_from = site @ { .id == req_from_site_id };
+    create request ( id, product, requested_by, requested_from, quantity, pending = true, approved = false, msg = "" );
+}
+
+operation approve_deny_request(caller_account_id: byte_array, request_id: text, approved: boolean, msg: text) {
+    auth.authenticate();
+    is_manager(caller_account_id);
+    val request = request @ { .id == request_id };
+    require(request.pending == true, "Request has been already processed");
+    if (approved) {
+        val avl_quantity = get_product_quantity_by_site(request.product.id, request.requested_from.id);
+        require(avl_quantity >= request.quantity, "Available quantity for this product is %s".format(avl_quantity));
+        val requested_by_site_inventory = inventory @? {
+            .product.id == request.product.id,
+            .site.id == request.requested_by.id
+        };
+        if (empty(requested_by_site_inventory)) {
+            val product = product @ { .id == request.product.id };
+            val site = site @ { .id == request.requested_by.id };
+            create inventory ( product, site, request.quantity );
+        } else {
+            update requested_by_site_inventory (
+                quantity += request.quantity
+            );
+        }
+        update inventory @ {
+            .product.id == request.product.id,
+            .site.id == request.requested_from.id
+        } (
+            quantity -= request.quantity
+        );
+        update request @ { .id == request_id } ( pending = false, approved = true, msg );
+    } else {
+        update request @ { .id == request_id } ( pending = false, approved = false, msg );
+    }
+}

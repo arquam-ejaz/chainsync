@@ -1,0 +1,29 @@
+module;
+
+import .model.*;
+import .constants;
+
+function is_signed(signer_pk: byte_array) = require(op_context.is_signer(signer_pk), "User must sign this operation");
+
+function user_exists(account_id: byte_array)  = require(user @? {.account.id == account_id}, "User with account id %s does not exists".format(account_id));
+
+function is_admin(account_id: byte_array) {
+    val user = user_exists(account_id);
+    require(user.role.title == constants.ROLE_ADMIN, "User %s is not an admin".format(user.name));
+}
+
+function is_manager(account_id: byte_array) {
+    val user = user_exists(account_id);
+    require(user.role.title == constants.ROLE_MANAGER, "User %s is not a manager".format(user.name));
+}
+
+function is_showroom_manager(account_id: byte_array) {
+    val user = user_exists(account_id);
+    require(user.role.title == constants.ROLE_MANAGER, "User %s is not a manager".format(user.name));
+    require(user.site.type == constants.SITE_SHOWROOM, "User %s is not a showroom manager".format(user.name));
+}
+
+function get_product_quantity_by_site(product_id: text, site_id: text): integer {
+    val quantity = inventory @ { .product.id == product_id, .site.id == site_id } ( .quantity );
+    return quantity;
+}

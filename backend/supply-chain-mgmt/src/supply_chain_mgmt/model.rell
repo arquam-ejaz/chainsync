@@ -1,0 +1,60 @@
+module;
+
+import lib.ft4.core.accounts.{ account };
+
+entity role {
+    key title: text;
+}
+
+entity site {
+    key id: text;
+    type: text;
+    mutable name: text;
+    mutable address_desc: text;
+    timestamp = op_context.last_block_time;
+}
+
+entity temp_user {
+    index mutable role;
+    index mutable site;
+    mutable name: text;
+    mutable active: boolean;
+    index wallet_address: text;
+    timestamp = op_context.last_block_time;
+}
+
+entity user {
+    key account;
+    index mutable role;
+    index mutable site;
+    mutable name: text;
+    mutable active: boolean;
+    timestamp = op_context.last_block_time;
+}
+
+entity product {
+    key id: text;
+    mutable name: text;
+    mutable desc: text;
+    mutable type: text;
+    timestamp = op_context.last_block_time;
+}
+
+entity inventory {
+    index site;
+    index product;
+    key site, product;
+    mutable quantity: integer;
+}
+
+entity request {
+    key id: text;
+    product;
+    index requested_by: site;
+    index requested_from: site;
+    quantity: integer;
+    mutable pending: boolean;
+    mutable approved: boolean;
+    mutable msg: text;
+    timestamp = op_context.last_block_time;
+}

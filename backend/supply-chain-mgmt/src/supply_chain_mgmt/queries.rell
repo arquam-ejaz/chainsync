@@ -1,0 +1,132 @@
+module;
+
+import ^.model.*;
+import ^.dto.*;
+
+query get_roles() {
+    return role @* { } ( .title );
+}
+
+query get_sites() {
+    return site @* { } ( @sort_desc @omit .timestamp, .id, .type, .name, .address_desc );
+}
+
+query get_users() {
+    return user @* { } (
+        @sort_desc @omit .timestamp,
+        user_dto (
+            .account.to_struct(),
+            .role.to_struct(),
+            .site.to_struct(),
+            .name,
+            .active,
+            .timestamp
+        )
+    );
+}
+
+query get_user(account_id: byte_array) {
+    return user @ {
+        .account.id == account_id
+    } (
+        user_dto (
+            .account.to_struct(),
+            .role.to_struct(),
+            .site.to_struct(),
+            .name,
+            .active,
+            .timestamp
+        )
+    );
+}
+
+query get_temp_user(wallet_address: text) {
+    return temp_user @ {
+        .wallet_address == wallet_address
+    } (
+        temp_user_dto (
+            .role.to_struct(),
+            .site.to_struct(),
+            .wallet_address,
+            .name,
+            .active,
+            .timestamp
+        )
+    );
+}
+
+query get_temp_users() {
+    return temp_user @* { } (
+        @sort_desc @omit .timestamp,
+        temp_user_dto (
+            .role.to_struct(),
+            .site.to_struct(),
+            .wallet_address,
+            .name,
+            .active,
+            .timestamp
+        )
+    );
+}
+
+query get_products() {
+    return product @* { } ( @sort_desc @omit .timestamp, .id, .name, .desc, .type );
+}
+
+query get_inventory_by_product(product_id: text) {
+    return inventory @* {
+        .product.id == product_id
+    } (
+        inventory_dto (
+            .site.to_struct(),
+            .product.to_struct(),
+            .quantity
+        )
+    );
+}
+
+query get_inventory_by_site(site_id: text) {
+    return inventory @* { .site.id == site_id } (
+        inventory_dto (
+            .site.to_struct(),
+            .product.to_struct(),
+            .quantity
+        )
+    );
+}
+
+query get_products_requested_by(req_by_site_id: text) {
+    return request @* {
+        .requested_by.id == req_by_site_id
+    } (
+        @sort_desc @omit .timestamp,
+        request_dto (
+            .id,
+            .product.to_struct(),
+            requested_by = .requested_by.to_struct(),
+            requested_from = .requested_from.to_struct(),
+            .quantity,
+            .pending,
+            .approved,
+            .msg
+        )
+    );
+}
+
+query get_products_requested_from(req_from_site_id: text) {
+    return request @* {
+        .requested_from.id == req_from_site_id
+    } (
+        @sort_desc @omit .timestamp,
+        request_dto (
+            .id,
+            .product.to_struct(),
+            requested_by = .requested_by.to_struct(),
+            requested_from = .requested_from.to_struct(),
+            .quantity,
+            .pending,
+            .approved,
+            .msg
+        )
+    );
+}

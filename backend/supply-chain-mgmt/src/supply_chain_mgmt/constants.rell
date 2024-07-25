@@ -1,0 +1,8 @@
+module;
+
+val ROLE_ADMIN: text = "ADMIN";
+val ROLE_MANAGER: text = "MANAGER";
+val SITE_SHOWROOM: text = "SHOWROOM";
+val SITE_WAREHOUSE: text = "WAREHOUSE";
+val INIT: text = "INIT";
+val INIT_SITE_ID: text = "90e9d73b-1ae2-4bd6-9596-0a2dc69bac72";
