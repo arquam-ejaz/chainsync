@@ -2,20 +2,23 @@
 
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import { useSessionContext } from "@/providers/ContextProvider";
-import { Metadata } from "next";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import UpdateUserModal from "./UpdateUserModal";
 import Spinner from "@/components/Spinner/Spinner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const Profile = () => {
-  const { account } = useSessionContext();
+  const { account, session } = useSessionContext();
   const [openUpdateUserModal, setOpenUpdateUserModal] = useState(false);
 
   const handleUserUpdated = () => {
     const event = new Event("refetch_account");
     window.dispatchEvent(event);
   };
+
+  useEffect(() => {
+    console.log({ account, session });
+  }, [account, session]);
 
   return (
     <DefaultLayout>

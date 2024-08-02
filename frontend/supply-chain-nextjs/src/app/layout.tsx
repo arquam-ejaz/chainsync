@@ -1,5 +1,5 @@
 import React from "react";
-import { ContextProvider } from "@/providers/ContextProvider";
+import Providers from "./providers";
 
 export default function RootLayout({
   children,
@@ -10,7 +10,7 @@ export default function RootLayout({
     <html lang="en">
       <body suppressHydrationWarning={true}>
         <div className="dark:bg-boxdark-2 dark:text-bodydark">
-          <ContextProvider>{children}</ContextProvider>
+          <Providers>{children}</Providers>
         </div>
       </body>
     </html>

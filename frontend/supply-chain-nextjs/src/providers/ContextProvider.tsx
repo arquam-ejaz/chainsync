@@ -22,7 +22,7 @@ import {
   useRef,
   useCallback,
 } from "react";
-import { getRandomUserName, uint8_to_hexStr } from "@/utils";
+import { getRandomUserName, uint8_to_hexStr } from "../utils";
 import { UserDto } from "@/app/users/Users";
 
 interface GlobalContext {
@@ -74,7 +74,7 @@ export function ContextProvider({ children }: { children: ReactNode }) {
       const config: NetworkSettings = {
         blockchainRid: isDevMode
           ? await getBlockchainRid()
-          : "DFF05EFA1231B815F13DD2A935C225D654625206C595259D794BCECCC459D391",
+          : "5EE5D44A566C753836FE27A0FD8E00205FF29ACA09B75F1C9674064F3911AC85",
       };
       if (isDevMode) {
         config.nodeUrlPool = "http://localhost:7740";

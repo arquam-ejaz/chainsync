@@ -5,6 +5,9 @@ blockchains:
       lib.ft4.core.auth:
         evm_signatures_authorized_operations:
           - register_user
+      lib.ft4.core.accounts:  
+        auth_descriptor:
+          max_number_per_account: 100
 libs:
   ft4:
     registry: https://bitbucket.org/chromawallet/ft3-lib
@@ -26,7 +29,7 @@ deployments:
     url: https://node0.projectnet.chromia.dev:7740 
     container: fa11574d7232a4eb4b7f4b4efc559df4322cfa527cb249c13797287abfa0a224
     chains:
-      supply_chain_mgmt: x"DFF05EFA1231B815F13DD2A935C225D654625206C595259D794BCECCC459D391"
+      supply_chain_mgmt: x"5EE5D44A566C753836FE27A0FD8E00205FF29ACA09B75F1C9674064F3911AC85"
 test:
   modules:
     - test
